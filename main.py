@@ -1,12 +1,11 @@
 import os
-from utils import load_files, plot_all_boxplot_pairs, _normalize_video
+from utils import load_files, plot_all_boxplot_pairs
 from deformations import compute_deformation
 import yaml
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib_scalebar.scalebar import ScaleBar
-from scipy.ndimage import laplace
 
 def load_config(config_path):
     with open(config_path, 'r', encoding='utf-8') as file:
