@@ -1,0 +1,12 @@
+optical_flow_regularisation: 0.01
+num_iter: 100
+num_warp: 1
+denoising_std: 0.5
+denoising_indices:
+  Population_1: [0]
+  Population_2: [0]
+  Population_3: [0, 1]
+  Population_4: []
+visuals: True
+plot_threshold: 1.5
+XY_resolution: 0.1625

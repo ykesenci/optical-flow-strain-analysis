@@ -245,3 +245,39 @@ def plot_all_boxplot_pairs(data_dict, output_dir="Figures", **kwargs):
 
         print(f"Plotted {key_i} vs {key_j}: p = {p_value:.4f}, Cohen's d = {cohens_d:.3f}")
         plt.close(fig)  # Close the figure to free memory
+
+def convert_numpy_to_tiff(input_directory: str, output_directory: str):
+    """
+    Converts all .npy files in the input directory to .tif format and saves them in the output directory.
+
+    Args:
+        input_directory (str): Path to the directory containing .npy files.
+        output_directory (str): Path to the directory where .tif files will be saved.
+    Notes:
+        - The function reads each .npy file, converts it to a TIFF image, and saves it with the same base filename but with a .tif extension.
+        - The output directory will be created if it does not exist.
+        - Only files with the .npy extension are processed; other files are ignored.
+    """
+    os.makedirs(output_directory, exist_ok=True)
+
+    for filename in os.listdir(input_directory):
+        if filename.endswith('.npy'):
+            input_path = os.path.join(input_directory, filename)
+            output_path = os.path.join(output_directory, filename.replace('.npy', '.tif'))
+
+            try:
+                # Load the .npy file
+                array = np.load(input_path)
+
+                # Save as .tif using tifffile
+                tifffile.imwrite(output_path, array.astype(np.float32))
+                print(f"Converted {input_path} to {output_path}")
+            except Exception as e:
+                print(f"Error converting {input_path}: {e}")
+
+
+if __name__ == "__main__":
+    # Example usage of the conversion function
+    input_dir = "/Users/yektakesenci/workspace/bodegraven_et_al/Data/Population_4/Masks"
+    output_dir = "/Users/yektakesenci/workspace/bodegraven_et_al/Data/Population_4/TIFF_Masks"
+    convert_numpy_to_tiff(input_dir, output_dir)

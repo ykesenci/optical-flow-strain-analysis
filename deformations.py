@@ -1,9 +1,8 @@
 import numpy as np
-from scipy.ndimage import gaussian_filter
+from scipy.ndimage import gaussian_filter, median_filter
 from optical_flow import hs_optical_flow
 from utils import _normalize_video
 from tqdm import tqdm
-from skimage.filters import median  # pylint: disable=no-name-in-module
 
 def process_flow(
     video: np.ndarray,
@@ -65,7 +64,7 @@ def process_flow(
     video = _normalize_video(video)
 
     if denoise and sigma > 0:
-        video = gaussian_filter(video, sigma=sigma)
+        video = gaussian_filter(video, sigma=[0, sigma / z_resolution, sigma, sigma])
         video = _normalize_video(video)
 
     u = []
@@ -122,6 +121,7 @@ def strain(u: np.ndarray) -> np.ndarray:
         grads = [np.gradient(u[t, j], axis=(0, 1, 2)) for j in range(d)]
         for i in range(d):
             for j in range(d):
+                # Compute the second order strain tensor
                 e[t, i, j] = 0.5 * (grads[j][i] + grads[i][j])
     return e
 
@@ -179,11 +179,12 @@ def compute_deformation(
 
     if indices is None:
         indices = set()
-
     list_enorm, deformations = [], []
     for index, (video, mask) in enumerate(zip(list_videos, list_masks)):
         try:
             denoise = index in indices
+            sigma = indices[index] / 255 if denoise else 0
+
             # Compute optical flow
             u = process_flow(
                 video,
@@ -194,11 +195,17 @@ def compute_deformation(
                 denoise=denoise,
                 video_index=index+1,
             )
+            # Apply median filtering to the flow field to reduce noise before strain computation
+            # u = median_filter(u, size=(3, 1, 3, 3, 3))
+
             # Strain tensor
             e = strain(u)
+
             # Apply mask + median filter
-            enorm = mask[0] * median(
-                np.mean(np.linalg.norm(e, axis=(1, 2)), axis=0)
+            # enorm = mask[0] * np.mean(np.linalg.norm(e, axis = (1,2)), axis = 0)
+            enorm = mask[0] * median_filter(
+                np.mean(np.linalg.norm(e, axis=(1, 2)), axis=0),
+                size=3
             )
             # Compute deformation normalized by volume
             volume = np.count_nonzero(mask[0])
